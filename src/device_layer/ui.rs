@@ -12,11 +12,11 @@ impl<G: IGpio> UserIndication<G> {
 }
 
 impl<G: IGpio> IUi for UserIndication<G> {
-    fn set(&self) {
+    fn set(&mut self) {
         self.gpio.set();
     }
 
-    fn reset(&self) {
+    fn reset(&mut self) {
         self.gpio.reset();
     }
 }

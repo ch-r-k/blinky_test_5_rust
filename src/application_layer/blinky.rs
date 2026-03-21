@@ -9,7 +9,7 @@ impl<UiType: IUi> Blinky<UiType> {
         Blinky { ui }
     }
 
-    pub fn run(&self) {
+    pub fn run(&mut self) {
         for _ in 0..9 {
             self.ui.set();
             self.ui.reset();

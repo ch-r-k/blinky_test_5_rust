@@ -1,4 +1,4 @@
 pub trait IUi {
-    fn set(&self);
-    fn reset(&self);
+    fn set(&mut self);
+    fn reset(&mut self);
 }

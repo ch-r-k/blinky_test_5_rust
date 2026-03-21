@@ -2,9 +2,14 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "cargo build",
+            "label": "cargo build (thumbv6m-none-eabi)",
             "type": "shell",
-            "command": "cargo build",
+            "command": "cargo",
+            "args": [
+                "build",
+                "--target",
+                "thumbv6m-none-eabi"
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true

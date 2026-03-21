@@ -1,25 +1,32 @@
 use crate::hardware_layer_abstraction::i_gpio::IGpio;
+use embedded_hal::digital::v2::OutputPin;
 
-pub struct Gpio {
-    pin: u8,
+/// Erase the HAL pin type; any OutputPin works.
+pub struct Gpio<PIN>
+where
+    PIN: OutputPin,
+{
+    pin: PIN,
 }
 
-// Implement methods for it
-
-impl Gpio {
-    // Constructor-like function
-    pub fn new(pin: u8) -> Self {
+impl<PIN> Gpio<PIN>
+where
+    PIN: OutputPin,
+{
+    pub fn from_pin(pin: PIN) -> Self {
         Gpio { pin }
     }
 }
 
-impl IGpio for Gpio {
-    // A method
-    fn set(&self) {
-        println!("Pin {}: [x]", self.pin);
+impl<PIN> IGpio for Gpio<PIN>
+where
+    PIN: OutputPin,
+{
+    fn set(&mut self) {
+        let _ = self.pin.set_high();
     }
 
-    fn reset(&self) {
-        println!("Pin {}: [ ]", self.pin);
+    fn reset(&mut self) {
+        let _ = self.pin.set_low();
     }
 }
