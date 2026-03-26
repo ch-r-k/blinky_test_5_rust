@@ -5,13 +5,13 @@ pub struct UserIndication<GpioType: IGpio> {
     gpio: GpioType,
 }
 
-impl<G: IGpio> UserIndication<G> {
-    pub fn new(gpio: G) -> Self {
+impl<GpioType: IGpio> UserIndication<GpioType> {
+    pub fn new(gpio: GpioType) -> Self {
         UserIndication { gpio }
     }
 }
 
-impl<G: IGpio> IUi for UserIndication<G> {
+impl<GpioType: IGpio> IUi for UserIndication<GpioType> {
     fn set(&mut self) {
         self.gpio.set();
     }

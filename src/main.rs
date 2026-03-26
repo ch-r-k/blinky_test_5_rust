@@ -1,6 +1,10 @@
 #![no_std]
 #![no_main]
 
+use defmt_rtt as _;
+use embassy_executor::Spawner;
+use panic_probe as _;
+
 mod application_layer;
 mod device_layer;
 mod device_layer_abstraction;
@@ -9,16 +13,9 @@ mod hardware_layer_abstraction;
 mod system_manager;
 
 use crate::system_manager::SystemManager;
-use panic_halt as _;
-use rp_pico::entry;
 
-#[entry]
-fn main() -> ! {
-    let mut system_manager = SystemManager::new();
-    system_manager.run();
-
-    loop {
-        system_manager.run();
-        cortex_m::asm::nop();
-    }
+#[embassy_executor::main]
+async fn main(_spawner: Spawner) {
+    let p = embassy_rp::init(Default::default());
+    SystemManager::run(p);
 }

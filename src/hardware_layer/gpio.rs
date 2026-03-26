@@ -1,32 +1,23 @@
 use crate::hardware_layer_abstraction::i_gpio::IGpio;
-use embedded_hal::digital::v2::OutputPin;
+use embassy_rp::gpio::Output;
 
-/// Erase the HAL pin type; any OutputPin works.
-pub struct Gpio<PIN>
-where
-    PIN: OutputPin,
-{
-    pin: PIN,
+/// HAL-erased GPIO output (Embassy-native)
+pub struct Gpio<'d> {
+    pin: Output<'d>,
 }
 
-impl<PIN> Gpio<PIN>
-where
-    PIN: OutputPin,
-{
-    pub fn from_pin(pin: PIN) -> Self {
-        Gpio { pin }
+impl<'d> Gpio<'d> {
+    pub fn new(pin: Output<'d>) -> Self {
+        Self { pin }
     }
 }
 
-impl<PIN> IGpio for Gpio<PIN>
-where
-    PIN: OutputPin,
-{
+impl<'d> IGpio for Gpio<'d> {
     fn set(&mut self) {
-        let _ = self.pin.set_high();
+        self.pin.set_high();
     }
 
     fn reset(&mut self) {
-        let _ = self.pin.set_low();
+        self.pin.set_low();
     }
 }

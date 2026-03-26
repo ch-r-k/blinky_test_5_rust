@@ -1,4 +1,5 @@
 use crate::device_layer_abstraction::i_ui::IUi;
+use cortex_m::asm::delay;
 
 pub struct Blinky<UiType: IUi> {
     ui: UiType,
@@ -10,9 +11,9 @@ impl<UiType: IUi> Blinky<UiType> {
     }
 
     pub fn run(&mut self) {
-        for _ in 0..9 {
-            self.ui.set();
-            self.ui.reset();
-        }
+        self.ui.set();
+        delay(24_000_000);
+        self.ui.reset();
+        delay(24_000_000);
     }
 }
