@@ -1,4 +1,4 @@
 pub trait IGpio {
-    fn set(&mut self);
-    fn reset(&mut self);
+    async fn set(&mut self);
+    async fn reset(&mut self);
 }

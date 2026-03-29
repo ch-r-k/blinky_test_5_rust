@@ -35,7 +35,7 @@ fixed-macro = "1.2"
 assign-resources = { git = "https://github.com/adamgreig/assign-resources", rev = "bd22cb7a92031fb16f74a5da42469d466c33383e" }
 
 #cortex-m = { version = "0.7.6", features = ["critical-section-single-core"] }
-cortex-m = { version = "0.7.6", features = ["inline-asm"] }
+cortex-m = { version = "0.7.7", features = ["inline-asm"] }
 cortex-m-rt = "0.7.0"
 critical-section = "1.1"
 panic-probe = { version = "1.0.0", features = ["print-defmt"] }
@@ -48,6 +48,7 @@ embedded-storage = { version = "0.3" }
 static_cell = "2.1"
 portable-atomic = { version = "1.5", features = ["critical-section"] }
 log = "0.4"
+smart-leds = "0.4"
 rand = { version = "0.9.0", default-features = false }
 embedded-sdmmc = "0.7.0"
 

@@ -13,11 +13,11 @@ impl<'d> Gpio<'d> {
 }
 
 impl<'d> IGpio for Gpio<'d> {
-    fn set(&mut self) {
+    async fn set(&mut self) {
         self.pin.set_high();
     }
 
-    fn reset(&mut self) {
+    async fn reset(&mut self) {
         self.pin.set_low();
     }
 }
