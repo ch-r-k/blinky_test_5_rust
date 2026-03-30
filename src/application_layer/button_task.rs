@@ -1,13 +1,10 @@
-use crate::application_layer::blinky_task::BlinkyHandle;
+use crate::application_layer::blinky_control::BlinkyControl;
 use crate::device_layer::user_input::UserInput;
 use embassy_executor::task;
 
 /// Button monitoring task - listens for button presses and toggles blinky
 #[task]
 pub async fn button_task(mut input: UserInput<'static>) {
-    let blinky = BlinkyHandle;
-    let mut is_running = false;
-
     loop {
         // Wait for button press (falling edge)
         input.wait_for_press().await;
@@ -15,14 +12,8 @@ pub async fn button_task(mut input: UserInput<'static>) {
         // Simple debounce delay
         embassy_time::Timer::after(embassy_time::Duration::from_millis(20)).await;
 
-        // Toggle blinky state
-        if is_running {
-            blinky.stop().await;
-            is_running = false;
-        } else {
-            blinky.start().await;
-            is_running = true;
-        }
+        // Toggle blinky state via independent control interface
+        BlinkyControl::toggle().await;
 
         // Wait for button release before accepting next press
         embassy_time::Timer::after(embassy_time::Duration::from_millis(200)).await;

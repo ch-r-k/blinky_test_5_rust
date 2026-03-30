@@ -1,10 +1,11 @@
-use crate::application_layer::blinky_task::{BlinkyHandle, blinky_task};
+use crate::application_layer::blinky_control::BlinkyControl;
+use crate::application_layer::blinky_task::blinky_task;
 use crate::application_layer::button_task::button_task;
 use crate::device_layer::ui::UserIndication;
-use crate::device_layer::ui_2::UserIndication2;
+use crate::device_layer::user_indication::UserIndication2;
 use crate::device_layer::user_input::UserInput;
-use crate::hardware_layer::gpio::GpioOutput;
 use crate::hardware_layer::gpio_input::GpioInput;
+use crate::hardware_layer::gpio_output::GpioOutput;
 use crate::hardware_layer::smart_led_bus::PioSmartLedBus;
 use embassy_executor::Spawner;
 use embassy_rp::Peripherals;
@@ -49,10 +50,8 @@ impl SystemManager {
         // --- spawn button task ---
         spawner.spawn(button_task(user_input).unwrap());
 
-        let blinky = BlinkyHandle;
-
-        // --- start it ---
-        blinky.start().await;
+        // --- start blinky via independent control interface ---
+        BlinkyControl::start().await;
 
         // --- system loop ---
         loop {

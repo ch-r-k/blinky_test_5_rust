@@ -8,10 +8,7 @@ pub struct Blinky<Ui: IUi> {
 
 impl<Ui: IUi> Blinky<Ui> {
     pub fn new(ui: Ui) -> Self {
-        Self {
-            ui,
-            running: false,
-        }
+        Self { ui, running: false }
     }
 
     pub fn start(&mut self) {
@@ -20,6 +17,10 @@ impl<Ui: IUi> Blinky<Ui> {
 
     pub fn stop(&mut self) {
         self.running = false;
+    }
+
+    pub fn is_running(&self) -> bool {
+        self.running
     }
 
     pub async fn step(&mut self) {
