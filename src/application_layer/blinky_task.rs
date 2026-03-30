@@ -29,7 +29,7 @@ impl BlinkyHandle {
     }
 }
 
-/// Embassy task (must be concrete)
+/// Blinky task - handles LED blinking based on events
 #[task]
 pub async fn blinky_task(ui: UserIndication2<PioSmartLedBus<'static, PIO0, 0>>) {
     let mut blinky = Blinky::new(ui);

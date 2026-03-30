@@ -1,12 +1,14 @@
 use crate::application_layer::blinky_task::{BlinkyHandle, blinky_task};
+use crate::application_layer::button_task::button_task;
 use crate::device_layer::ui::UserIndication;
 use crate::device_layer::ui_2::UserIndication2;
 use crate::hardware_layer::gpio::GpioOutput;
+use crate::hardware_layer::gpio_input::GpioInput;
 use crate::hardware_layer::smart_led_bus::PioSmartLedBus;
 use embassy_executor::Spawner;
 use embassy_rp::Peripherals;
 use embassy_rp::bind_interrupts;
-use embassy_rp::gpio::{Level, Output};
+use embassy_rp::gpio::{Input, Level, Output, Pull};
 use embassy_rp::pio::Pio;
 use embassy_rp::pio_programs::ws2812::{PioWs2812, PioWs2812Program};
 
@@ -18,9 +20,9 @@ bind_interrupts!(struct Irqs {
 pub struct SystemManager {}
 
 impl SystemManager {
-    /// Run the system (sync, because Blinky is sync)
+    /// Run the system with separate blinky and button tasks
     pub async fn run(p: Peripherals, spawner: Spawner) {
-        // --- hardware setup (unchanged) ---
+        // --- hardware setup ---
         let led = Output::new(p.PIN_25, Level::Low);
         let gpio = GpioOutput::new(led);
 
@@ -35,8 +37,15 @@ impl SystemManager {
         let _ui = UserIndication::new(gpio);
         let ui2 = UserIndication2::new(led_bus);
 
-        // --- spawn active object ---
+        // --- spawn blinky task ---
         spawner.spawn(blinky_task(ui2).unwrap());
+
+        // --- button setup (GPIO20 - change PIN_XX as needed) ---
+        let button = Input::new(p.PIN_10, Pull::Up);
+        let button_gpio = GpioInput::new(button);
+
+        // --- spawn button task ---
+        spawner.spawn(button_task(button_gpio).unwrap());
 
         let blinky = BlinkyHandle;
 
