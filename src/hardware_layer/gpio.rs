@@ -1,18 +1,18 @@
-use crate::hardware_layer_abstraction::i_gpio::IGpio;
+use crate::hardware_layer_abstraction::i_gpio::IGpioOutput;
 use embassy_rp::gpio::Output;
 
 /// HAL-erased GPIO output (Embassy-native)
-pub struct Gpio<'d> {
+pub struct GpioOutput<'d> {
     pin: Output<'d>,
 }
 
-impl<'d> Gpio<'d> {
+impl<'d> GpioOutput<'d> {
     pub fn new(pin: Output<'d>) -> Self {
         Self { pin }
     }
 }
 
-impl<'d> IGpio for Gpio<'d> {
+impl<'d> IGpioOutput for GpioOutput<'d> {
     async fn set(&mut self) {
         self.pin.set_high();
     }

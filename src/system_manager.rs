@@ -1,7 +1,7 @@
 use crate::application_layer::blinky_task::{BlinkyHandle, blinky_task};
 use crate::device_layer::ui::UserIndication;
 use crate::device_layer::ui_2::UserIndication2;
-use crate::hardware_layer::gpio::Gpio;
+use crate::hardware_layer::gpio::GpioOutput;
 use crate::hardware_layer::smart_led_bus::PioSmartLedBus;
 use embassy_executor::Spawner;
 use embassy_rp::Peripherals;
@@ -22,7 +22,7 @@ impl SystemManager {
     pub async fn run(p: Peripherals, spawner: Spawner) {
         // --- hardware setup (unchanged) ---
         let led = Output::new(p.PIN_25, Level::Low);
-        let gpio = Gpio::new(led);
+        let gpio = GpioOutput::new(led);
 
         let Pio {
             mut common, sm0, ..
