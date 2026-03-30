@@ -14,26 +14,28 @@ impl<BusType: ISmartLedBus> UserIndication2<BusType> {
 
 impl<BusType: ISmartLedBus> IUi for UserIndication2<BusType> {
     async fn set(&mut self) {
-        let color = [Rgb {
-            red: 255,
-            green: 255,
-            blue: 255,
-        },
-        Rgb {
-            red: 0,
-            green: 255,
-            blue: 255,
-        },
-        Rgb {
-            red: 255,
-            green: 255,
-            blue: 0,
-        },
-        Rgb {
-            red: 0,
-            green: 255,
-            blue: 0,
-        }];
+        let color = [
+            Rgb {
+                red: 255,
+                green: 255,
+                blue: 255,
+            },
+            Rgb {
+                red: 0,
+                green: 255,
+                blue: 255,
+            },
+            Rgb {
+                red: 255,
+                green: 255,
+                blue: 0,
+            },
+            Rgb {
+                red: 0,
+                green: 255,
+                blue: 0,
+            },
+        ];
 
         self.smart_led.write(&color).await;
     }
