@@ -8,6 +8,7 @@ use crate::hardware_layer::smart_led_bus::PioSmartLedBus;
 use embassy_executor::Spawner;
 use embassy_executor::task;
 use embassy_rp::peripherals::PIO0;
+use embassy_time::Duration;
 
 /// Blinky task - handles LED blinking based on control events
 #[task]
@@ -20,13 +21,7 @@ async fn blinky_task(ui: UserIndication2<PioSmartLedBus<'static, PIO0, 0>>) {
             match event {
                 BlinkyControlEvent::Start => blinky.start(),
                 BlinkyControlEvent::Stop => blinky.stop(),
-                BlinkyControlEvent::Toggle => {
-                    if blinky.is_running() {
-                        blinky.stop();
-                    } else {
-                        blinky.start();
-                    }
-                }
+                BlinkyControlEvent::Toggle => blinky.toggle(),
             }
         }
 
@@ -65,7 +60,7 @@ impl ApplicationManager {
 
         // Application loop (could be extended for more logic)
         loop {
-            embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
+            embassy_time::Timer::after(Duration::from_secs(1)).await;
         }
     }
 }

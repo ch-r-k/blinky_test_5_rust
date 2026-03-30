@@ -19,6 +19,14 @@ impl<Ui: IUi> Blinky<Ui> {
         self.running = false;
     }
 
+    pub fn toggle(&mut self) {
+        if self.running {
+            self.stop();
+        } else {
+            self.start();
+        }
+    }
+
     pub fn is_running(&self) -> bool {
         self.running
     }
