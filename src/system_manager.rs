@@ -1,8 +1,9 @@
-use crate::application_layer::blinky::Blinky;
+use crate::application_layer::blinky_task::{BlinkyHandle, blinky_task};
 use crate::device_layer::ui::UserIndication;
 use crate::device_layer::ui_2::UserIndication2;
 use crate::hardware_layer::gpio::Gpio;
 use crate::hardware_layer::smart_led_bus::PioSmartLedBus;
+use embassy_executor::Spawner;
 use embassy_rp::Peripherals;
 use embassy_rp::bind_interrupts;
 use embassy_rp::gpio::{Level, Output};
@@ -18,12 +19,10 @@ pub struct SystemManager {}
 
 impl SystemManager {
     /// Run the system (sync, because Blinky is sync)
-    pub async fn run(p: Peripherals) {
-        // led gpio
+    pub async fn run(p: Peripherals, spawner: Spawner) {
+        // --- hardware setup (unchanged) ---
         let led = Output::new(p.PIN_25, Level::Low);
         let gpio = Gpio::new(led);
-
-        // led strip via pio
 
         let Pio {
             mut common, sm0, ..
@@ -31,18 +30,22 @@ impl SystemManager {
 
         let program = PioWs2812Program::new(&mut common);
         let ws2812 = PioWs2812::new(&mut common, sm0, p.DMA_CH0, Irqs, p.PIN_1, &program);
-
         let led_bus = PioSmartLedBus::new(ws2812);
 
-        // ui
         let _ui = UserIndication::new(gpio);
         let ui2 = UserIndication2::new(led_bus);
 
-        // ui
-        let mut blinky = Blinky::new(ui2);
+        // --- spawn active object ---
+        spawner.spawn(blinky_task(ui2).unwrap());
 
+        let blinky = BlinkyHandle;
+
+        // --- start it ---
+        blinky.start().await;
+
+        // --- system loop ---
         loop {
-            blinky.run().await;
+            embassy_time::Timer::after(embassy_time::Duration::from_secs(1)).await;
         }
     }
 }

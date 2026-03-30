@@ -15,7 +15,7 @@ mod system_manager;
 use crate::system_manager::SystemManager;
 
 #[embassy_executor::main]
-async fn main(_spawner: Spawner) {
+async fn main(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
-    SystemManager::run(p).await;
+    SystemManager::run(p, spawner).await;
 }

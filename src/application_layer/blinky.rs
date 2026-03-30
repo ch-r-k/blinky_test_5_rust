@@ -1,20 +1,37 @@
 use crate::device_layer_abstraction::i_ui::IUi;
 use embassy_time::{Duration, Timer};
 
-pub struct Blinky<UiType: IUi> {
-    ui: UiType,
+pub struct Blinky<Ui: IUi> {
+    ui: Ui,
+    running: bool,
 }
 
-impl<UiType: IUi> Blinky<UiType> {
-    pub fn new(ui: UiType) -> Self {
-        Blinky { ui }
+impl<Ui: IUi> Blinky<Ui> {
+    pub fn new(ui: Ui) -> Self {
+        Self {
+            ui,
+            running: false,
+        }
     }
 
-    pub async fn run(&mut self) {
-        self.ui.set().await;
-        Timer::after(Duration::from_millis(500)).await;
+    pub fn start(&mut self) {
+        self.running = true;
+    }
 
-        self.ui.reset().await;
-        Timer::after(Duration::from_millis(500)).await;
+    pub fn stop(&mut self) {
+        self.running = false;
+    }
+
+    pub async fn step(&mut self) {
+        if self.running {
+            self.ui.set().await;
+            Timer::after(Duration::from_millis(500)).await;
+
+            self.ui.reset().await;
+            Timer::after(Duration::from_millis(500)).await;
+        } else {
+            // idle behavior (optional)
+            Timer::after(Duration::from_millis(100)).await;
+        }
     }
 }
