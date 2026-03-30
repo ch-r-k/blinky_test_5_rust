@@ -2,6 +2,7 @@ use crate::application_layer::blinky_task::{BlinkyHandle, blinky_task};
 use crate::application_layer::button_task::button_task;
 use crate::device_layer::ui::UserIndication;
 use crate::device_layer::ui_2::UserIndication2;
+use crate::device_layer::user_input::UserInput;
 use crate::hardware_layer::gpio::GpioOutput;
 use crate::hardware_layer::gpio_input::GpioInput;
 use crate::hardware_layer::smart_led_bus::PioSmartLedBus;
@@ -40,12 +41,13 @@ impl SystemManager {
         // --- spawn blinky task ---
         spawner.spawn(blinky_task(ui2).unwrap());
 
-        // --- button setup (GPIO20 - change PIN_XX as needed) ---
+        // --- button setup (GPIO10 - change PIN_XX as needed) ---
         let button = Input::new(p.PIN_10, Pull::Up);
         let button_gpio = GpioInput::new(button);
+        let user_input = UserInput::new(button_gpio);
 
         // --- spawn button task ---
-        spawner.spawn(button_task(button_gpio).unwrap());
+        spawner.spawn(button_task(user_input).unwrap());
 
         let blinky = BlinkyHandle;
 
