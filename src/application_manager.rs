@@ -1,9 +1,11 @@
 use crate::application_layer::blinky::Blinky;
 use crate::application_layer::blinky_control::{BlinkyControl, BlinkyControlEvent};
 use crate::application_layer::button::Button;
-use crate::device_layer::user_indication::UserIndication2;
+use crate::device_layer::user_indication_led::UserIndication;
+use crate::device_layer::user_indication_led_strip::UserIndication2;
 use crate::device_layer::user_input::UserInput;
 use crate::device_manager::DeviceResources;
+use crate::hardware_layer::gpio_output::GpioOutput;
 use crate::hardware_layer::smart_led_bus::PioSmartLedBus;
 use embassy_executor::Spawner;
 use embassy_executor::task;
@@ -13,8 +15,11 @@ use embassy_time::Timer;
 
 /// Blinky task - handles LED blinking based on control events
 #[task]
-async fn blinky_task(ui: UserIndication2<PioSmartLedBus<'static, PIO0, 0>>) {
-    let mut blinky = Blinky::new(ui);
+async fn blinky_task(
+    mut ui_gpio: UserIndication<GpioOutput<'static>>,
+    mut ui_led_bus: UserIndication2<PioSmartLedBus<'static, PIO0, 0>>,
+) {
+    let mut blinky = Blinky::new(&mut ui_gpio, &mut ui_led_bus);
 
     loop {
         // Handle control events
@@ -48,12 +53,13 @@ impl ApplicationManager {
     /// Initialize application components and spawn tasks
     pub async fn init_and_run(device: DeviceResources, spawner: Spawner) {
         let DeviceResources {
+            user_indication,
             user_indication_2,
             user_input,
         } = device;
 
         // Spawn tasks - they create their own application objects internally
-        spawner.spawn(blinky_task(user_indication_2).unwrap());
+        spawner.spawn(blinky_task(user_indication, user_indication_2).unwrap());
         spawner.spawn(button_task(user_input).unwrap());
 
         // Start the blinky

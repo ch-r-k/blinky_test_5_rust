@@ -1,14 +1,19 @@
 use crate::device_layer_abstraction::i_ui::IUi;
 use embassy_time::{Duration, Timer};
 
-pub struct Blinky<Ui: IUi> {
-    ui: Ui,
+pub struct Blinky<'a, UiG: IUi, UiL: IUi> {
+    ui_gpio: &'a mut UiG,
+    ui_led_bus: &'a mut UiL,
     running: bool,
 }
 
-impl<Ui: IUi> Blinky<Ui> {
-    pub fn new(ui: Ui) -> Self {
-        Self { ui, running: false }
+impl<'a, UiG: IUi, UiL: IUi> Blinky<'a, UiG, UiL> {
+    pub fn new(ui_gpio: &'a mut UiG, ui_led_bus: &'a mut UiL) -> Self {
+        Self {
+            ui_gpio,
+            ui_led_bus,
+            running: false,
+        }
     }
 
     pub fn start(&mut self) {
@@ -27,16 +32,19 @@ impl<Ui: IUi> Blinky<Ui> {
         }
     }
 
-    pub fn is_running(&self) -> bool {
-        self.running
-    }
-
     pub async fn step(&mut self) {
         if self.running {
-            self.ui.set().await;
+            // Turn all UIs ON
+
+            self.ui_gpio.set().await;
+            self.ui_led_bus.set().await;
+
             Timer::after(Duration::from_millis(500)).await;
 
-            self.ui.reset().await;
+            // Turn all UIs OFF
+            self.ui_gpio.reset().await;
+            self.ui_led_bus.reset().await;
+
             Timer::after(Duration::from_millis(500)).await;
         } else {
             // idle behavior (optional)
