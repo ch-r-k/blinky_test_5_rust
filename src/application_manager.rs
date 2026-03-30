@@ -9,6 +9,7 @@ use embassy_executor::Spawner;
 use embassy_executor::task;
 use embassy_rp::peripherals::PIO0;
 use embassy_time::Duration;
+use embassy_time::Timer;
 
 /// Blinky task - handles LED blinking based on control events
 #[task]
@@ -60,7 +61,7 @@ impl ApplicationManager {
 
         // Application loop (could be extended for more logic)
         loop {
-            embassy_time::Timer::after(Duration::from_secs(1)).await;
+            Timer::after(Duration::from_secs(1)).await;
         }
     }
 }
