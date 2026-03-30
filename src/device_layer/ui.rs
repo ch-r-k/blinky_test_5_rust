@@ -1,5 +1,5 @@
 use crate::device_layer_abstraction::i_ui::IUi;
-use crate::hardware_layer_abstraction::i_gpio::IGpioOutput;
+use crate::hardware_layer_abstraction::i_gpio_output::IGpioOutput;
 
 pub struct UserIndication<GpioType: IGpioOutput> {
     gpio: GpioType,

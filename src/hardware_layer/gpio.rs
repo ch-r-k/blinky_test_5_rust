@@ -1,4 +1,4 @@
-use crate::hardware_layer_abstraction::i_gpio::IGpioOutput;
+use crate::hardware_layer_abstraction::i_gpio_output::IGpioOutput;
 use embassy_rp::gpio::Output;
 
 /// HAL-erased GPIO output (Embassy-native)
