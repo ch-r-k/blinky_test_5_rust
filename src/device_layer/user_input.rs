@@ -1,18 +1,36 @@
-use crate::hardware_layer::gpio_input::GpioInput;
+use crate::device_layer_abstraction::icb_user_input_press::IcbUserInput;
 use crate::hardware_layer_abstraction::i_gpio_input::IGpioInput;
+use crate::hardware_layer_abstraction::icb_gpio_input::IcbGpioInput;
 
-/// Device layer abstraction for user input (button)
-pub struct UserInput<'d> {
-    input: GpioInput<'d>,
+pub struct UserInput<InputType: IGpioInput> {
+    input: InputType,
 }
 
-impl<'d> UserInput<'d> {
-    pub fn new(input: GpioInput<'d>) -> Self {
+pub struct UserInputPressCallbackAdapter<CallbackType: IcbUserInput> {
+    callback: CallbackType,
+}
+
+impl<CallbackType: IcbUserInput> UserInputPressCallbackAdapter<CallbackType> {
+    pub fn new(callback: CallbackType) -> Self {
+        Self { callback }
+    }
+}
+
+impl<CallbackType: IcbUserInput> IcbGpioInput
+    for UserInputPressCallbackAdapter<CallbackType>
+{
+    fn on_press(&mut self) {
+        self.callback.on_user_input_press();
+    }
+}
+
+impl<InputType: IGpioInput> UserInput<InputType> {
+    pub fn new(input: InputType) -> Self {
         Self { input }
     }
 
-    /// Wait for a button press
-    pub async fn wait_for_press(&mut self) {
-        self.input.wait_for_press().await;
+    pub fn into_inner(self) -> InputType {
+        self.input
     }
 }
+

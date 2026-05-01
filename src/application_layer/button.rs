@@ -1,29 +1,91 @@
-use crate::application_layer::blinky_control::BlinkyControl;
-use crate::device_layer::user_input::UserInput;
-use embassy_time::Duration;
+use crate::device_layer_abstraction::icb_user_input_press::IcbUserInput;
+use crate::framework::active_object::ActiveObject;
+use crate::framework::event::{BlinkyEvent, ButtonEvent, TimerCommand, TimerRecipient};
+use crate::framework::message_bus::{try_publish, BusSender};
 
-/// Button handler that manages button press detection and debouncing
-pub struct Button<'d> {
-    input: UserInput<'d>,
+const BUTTON_DEBOUNCE_MS: u32 = 30;
+const BUTTON_TIMER_ID: u8 = 0;
+
+#[derive(Clone, Copy)]
+enum ButtonState {
+    Idle,
+    Debouncing,
 }
 
-impl<'d> Button<'d> {
-    pub fn new(input: UserInput<'d>) -> Self {
-        Self { input }
+pub enum ButtonEffect {
+    TimerCommand(TimerCommand),
+    BlinkyEvent(BlinkyEvent),
+}
+
+/// Button active object handling debouncing and semantic event generation.
+pub struct Button {
+    state: ButtonState,
+    generation: u32,
+}
+
+impl Button {
+    pub fn new() -> Self {
+        Self {
+            state: ButtonState::Idle,
+            generation: 0,
+        }
     }
 
-    /// Handle one button press cycle (wait for press, debounce, toggle, wait for release)
-    pub async fn handle_press(&mut self) {
-        // Wait for button press (falling edge)
-        self.input.wait_for_press().await;
+    fn arm_debounce(&mut self) -> TimerCommand {
+        self.generation = self.generation.wrapping_add(1);
 
-        // Simple debounce delay
-        embassy_time::Timer::after(Duration::from_millis(20)).await;
+        TimerCommand::Arm {
+            recipient: TimerRecipient::Button,
+            timer_id: BUTTON_TIMER_ID,
+            generation: self.generation,
+            delay_ms: BUTTON_DEBOUNCE_MS,
+        }
+    }
 
-        // Toggle blinky state via independent control interface
-        BlinkyControl::toggle().await;
+    pub fn on_event(&mut self, event: ButtonEvent) -> Option<ButtonEffect> {
+        match event {
+            ButtonEvent::Press => match self.state {
+                ButtonState::Idle => {
+                    self.state = ButtonState::Debouncing;
+                    Some(ButtonEffect::TimerCommand(self.arm_debounce()))
+                }
+                ButtonState::Debouncing => None,
+            },
+            ButtonEvent::Timeout {
+                timer_id,
+                generation,
+            } if timer_id == BUTTON_TIMER_ID && generation == self.generation => {
+                self.state = ButtonState::Idle;
+                Some(ButtonEffect::BlinkyEvent(BlinkyEvent::Toggle))
+            }
+            ButtonEvent::Timeout { .. } => None,
+        }
+    }
+}
 
-        // Wait for button release before accepting next press
-        embassy_time::Timer::after(Duration::from_millis(200)).await;
+impl ActiveObject<ButtonEvent, ButtonEffect> for Button {
+    fn handle_event(&mut self, event: ButtonEvent) -> Option<ButtonEffect> {
+        self.on_event(event)
+    }
+}
+
+/// IRQ callback publisher: converts hardware button press to Button AO input events.
+pub struct ButtonIrqCallback {
+    event_sender: BusSender<'static, ButtonEvent, 8>,
+}
+
+impl ButtonIrqCallback {
+    pub fn new(event_sender: BusSender<'static, ButtonEvent, 8>) -> Self {
+        Self { event_sender }
+    }
+
+    pub fn on_user_input_press(&mut self) {
+        let _ = try_publish(&mut self.event_sender, ButtonEvent::Press);
+    }
+}
+
+impl IcbUserInput for ButtonIrqCallback {
+    fn on_user_input_press(&mut self) {
+        ButtonIrqCallback::on_user_input_press(self);
     }
 }

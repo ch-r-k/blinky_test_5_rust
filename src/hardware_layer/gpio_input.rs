@@ -1,19 +1,22 @@
 use crate::hardware_layer_abstraction::i_gpio_input::IGpioInput;
-use embassy_rp::gpio::Input;
+use crate::hardware_layer_abstraction::icb_gpio_input::IcbGpioInput;
+use rp2040_hal::gpio::{FunctionSio, Interrupt, Pin, PinId, PullType, SioInput};
 
-/// HAL-erased GPIO input (Embassy-native)
-pub struct GpioInput<'d> {
-    pin: Input<'d>,
+pub struct GpioInput<I: PinId, P: PullType> {
+    pin: Pin<I, FunctionSio<SioInput>, P>,
 }
 
-impl<'d> GpioInput<'d> {
-    pub fn new(pin: Input<'d>) -> Self {
+impl<I: PinId, P: PullType> GpioInput<I, P> {
+    pub fn new(pin: Pin<I, FunctionSio<SioInput>, P>) -> Self {
         Self { pin }
     }
 }
 
-impl<'d> IGpioInput for GpioInput<'d> {
-    async fn wait_for_press(&mut self) {
-        self.pin.wait_for_falling_edge().await;
+impl<I: PinId, P: PullType> IGpioInput for GpioInput<I, P> {
+    fn handle_irq<C: IcbGpioInput>(&mut self, callback: &mut C) {
+        if self.pin.interrupt_status(Interrupt::EdgeLow) {
+            self.pin.clear_interrupt(Interrupt::EdgeLow);
+            callback.on_press();
+        }
     }
 }

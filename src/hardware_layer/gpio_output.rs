@@ -1,23 +1,29 @@
 use crate::hardware_layer_abstraction::i_gpio_output::IGpioOutput;
-use embassy_rp::gpio::Output;
+use embedded_hal::digital::OutputPin;
+use rp2040_hal::gpio::{FunctionSio, Pin, PinId, PullType, SioOutput};
 
-/// HAL-erased GPIO output (Embassy-native)
-pub struct GpioOutput<'d> {
-    pin: Output<'d>,
+pub struct GpioOutput<I: PinId, P: PullType> {
+    pin: Pin<I, FunctionSio<SioOutput>, P>,
 }
 
-impl<'d> GpioOutput<'d> {
-    pub fn new(pin: Output<'d>) -> Self {
+impl<I: PinId, P: PullType> GpioOutput<I, P>
+where
+    Pin<I, FunctionSio<SioOutput>, P>: OutputPin,
+{
+    pub fn new(pin: Pin<I, FunctionSio<SioOutput>, P>) -> Self {
         Self { pin }
     }
 }
 
-impl<'d> IGpioOutput for GpioOutput<'d> {
-    async fn set(&mut self) {
-        self.pin.set_high();
+impl<I: PinId, P: PullType> IGpioOutput for GpioOutput<I, P>
+where
+    Pin<I, FunctionSio<SioOutput>, P>: OutputPin,
+{
+    fn set(&mut self) {
+        let _ = self.pin.set_high();
     }
 
-    async fn reset(&mut self) {
-        self.pin.set_low();
+    fn reset(&mut self) {
+        let _ = self.pin.set_low();
     }
 }

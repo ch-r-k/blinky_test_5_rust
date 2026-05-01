@@ -11,8 +11,14 @@ fn main() {
         .write_all(include_bytes!("memory.x"))
         .unwrap();
 
+    File::create(out.join("link-rp.x"))
+        .unwrap()
+        .write_all(include_bytes!("link-rp.x"))
+        .unwrap();
+
     println!("cargo:rustc-link-search={}", out.display());
     println!("cargo:rerun-if-changed=memory.x");
+    println!("cargo:rerun-if-changed=link-rp.x");
 
     println!("cargo:rustc-link-arg-bins=--nmagic");
     println!("cargo:rustc-link-arg-bins=-Tlink.x");

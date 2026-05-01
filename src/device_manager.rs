@@ -1,39 +1,33 @@
 use crate::device_layer::user_indication_led::UserIndication;
-use crate::device_layer::user_indication_led_strip::UserIndication2;
 use crate::device_layer::user_input::UserInput;
+use crate::hardware_layer::gpio_input::GpioInput;
 use crate::hardware_layer::gpio_output::GpioOutput;
-use crate::hardware_layer::smart_led_bus::PioSmartLedBus;
 use crate::hardware_manager::HardwareResources;
-use embassy_rp::peripherals::PIO0;
+use rp2040_hal::gpio::bank0::{Gpio10, Gpio25};
+use rp2040_hal::gpio::{PullDown, PullUp};
 
-/// Device Manager - manages device layer abstractions
-pub struct DeviceManager {}
+pub type DeviceUserIndication = UserIndication<GpioOutput<Gpio25, PullDown>>;
+pub type DeviceGpioInput = GpioInput<Gpio10, PullUp>;
+pub type DeviceUserInput = UserInput<GpioInput<Gpio10, PullUp>>;
+
+/// Device resources bundle
+pub struct DeviceResources {
+    pub user_indication: DeviceUserIndication,
+    pub user_input: DeviceUserInput,
+}
+
+pub struct DeviceManager;
 
 impl DeviceManager {
-    /// Initialize device layer components
     pub fn init(hardware: HardwareResources) -> DeviceResources {
         let HardwareResources {
             gpio_output,
             gpio_input,
-            led_bus,
         } = hardware;
 
-        // Create device abstractions
-        let user_indication = UserIndication::new(gpio_output);
-        let user_indication_2 = UserIndication2::new(led_bus);
-        let user_input = UserInput::new(gpio_input);
-
         DeviceResources {
-            user_indication,
-            user_indication_2,
-            user_input,
+            user_indication: UserIndication::new(gpio_output),
+            user_input: UserInput::new(gpio_input),
         }
     }
-}
-
-/// Device resources bundle
-pub struct DeviceResources {
-    pub user_indication: UserIndication<GpioOutput<'static>>,
-    pub user_indication_2: UserIndication2<PioSmartLedBus<'static, PIO0, 0>>,
-    pub user_input: UserInput<'static>,
 }

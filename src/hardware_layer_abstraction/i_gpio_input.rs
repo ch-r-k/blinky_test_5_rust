@@ -1,3 +1,5 @@
+use crate::hardware_layer_abstraction::icb_gpio_input::IcbGpioInput;
+
 pub trait IGpioInput {
-    async fn wait_for_press(&mut self);
+    fn handle_irq<C: IcbGpioInput>(&mut self, callback: &mut C);
 }

@@ -1,52 +1,62 @@
 use crate::hardware_layer::gpio_input::GpioInput;
 use crate::hardware_layer::gpio_output::GpioOutput;
-use crate::hardware_layer::smart_led_bus::PioSmartLedBus;
-use embassy_rp::Peripherals;
-use embassy_rp::bind_interrupts;
-use embassy_rp::gpio::{Input, Level, Output, Pull};
-use embassy_rp::peripherals::PIO0;
-use embassy_rp::pio::Pio;
-use embassy_rp::pio_programs::ws2812::{PioWs2812, PioWs2812Program};
+use rp2040_hal::clocks::init_clocks_and_plls;
+use rp2040_hal::gpio::bank0::{Gpio10, Gpio25};
+use rp2040_hal::gpio::{Interrupt, Pins, PullDown, PullUp};
+use rp2040_hal::pac;
+use rp2040_hal::Sio;
+use rp2040_hal::Watchdog;
 
-bind_interrupts!(struct Irqs {
-    PIO0_IRQ_0 => embassy_rp::pio::InterruptHandler<embassy_rp::peripherals::PIO0>;
-    DMA_IRQ_0 => embassy_rp::dma::InterruptHandler<embassy_rp::peripherals::DMA_CH0>;
-});
+/// Hardware resources bundle (LED + button, no LED strip)
+pub struct HardwareResources {
+    pub gpio_output: GpioOutput<Gpio25, PullDown>,
+    pub gpio_input: GpioInput<Gpio10, PullUp>,
+}
 
-/// Hardware Manager - manages hardware peripherals
-pub struct HardwareManager {}
+pub struct HardwareManager;
 
 impl HardwareManager {
-    /// Initialize hardware peripherals
-    pub fn init(p: Peripherals) -> HardwareResources {
-        // Initialize LED output
-        let led = Output::new(p.PIN_25, Level::Low);
+    /// Initialize hardware peripherals using rp2040-hal.
+    /// NOTE: `pac.TIMER` must be passed to `Mono::start` before calling this
+    /// (in the RTIC init function), so it is excluded from the arguments here.
+    pub fn init(
+        watchdog_periph: pac::WATCHDOG,
+        xosc: pac::XOSC,
+        clocks_block: pac::CLOCKS,
+        pll_sys: pac::PLL_SYS,
+        pll_usb: pac::PLL_USB,
+        mut resets: pac::RESETS,
+        sio_periph: pac::SIO,
+        io_bank0: pac::IO_BANK0,
+        pads_bank0: pac::PADS_BANK0,
+    ) -> HardwareResources {
+        let mut watchdog = Watchdog::new(watchdog_periph);
+
+        let _clocks = init_clocks_and_plls(
+            12_000_000u32,
+            xosc,
+            clocks_block,
+            pll_sys,
+            pll_usb,
+            &mut resets,
+            &mut watchdog,
+        )
+        .ok()
+        .unwrap();
+
+        let sio = Sio::new(sio_periph);
+        let pins = Pins::new(io_bank0, pads_bank0, sio.gpio_bank0, &mut resets);
+
+        let led = pins.gpio25.into_push_pull_output();
         let gpio_output = GpioOutput::new(led);
 
-        // Initialize button input
-        let button = Input::new(p.PIN_10, Pull::Up);
+        let button = pins.gpio10.into_pull_up_input();
+        button.set_interrupt_enabled(Interrupt::EdgeLow, true);
         let gpio_input = GpioInput::new(button);
-
-        // Initialize LED bus (WS2812)
-        let Pio {
-            mut common, sm0, ..
-        } = Pio::new(p.PIO0, Irqs);
-
-        let program = PioWs2812Program::new(&mut common);
-        let ws2812 = PioWs2812::new(&mut common, sm0, p.DMA_CH0, Irqs, p.PIN_1, &program);
-        let led_bus = PioSmartLedBus::new(ws2812);
 
         HardwareResources {
             gpio_output,
             gpio_input,
-            led_bus,
         }
     }
-}
-
-/// Hardware resources bundle
-pub struct HardwareResources {
-    pub gpio_output: GpioOutput<'static>,
-    pub gpio_input: GpioInput<'static>,
-    pub led_bus: PioSmartLedBus<'static, PIO0, 0>,
 }
